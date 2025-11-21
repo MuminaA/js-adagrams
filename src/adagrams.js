@@ -11,8 +11,9 @@ const letterPool = {
 export const drawLetters = () => {
   let letterBank = [];
   let poolDictCopy = {...letterPool};
+  const handSize = 10;
 
-  while (letterBank.length < 10) {
+  while (letterBank.length < handSize) {
     const usesAvailableLetters = [];
 
     for (const [letter, count] of Object.entries(poolDictCopy)) {
@@ -30,7 +31,6 @@ export const drawLetters = () => {
   }
 
   return letterBank;
-
 };
 
 export const usesAvailableLetters = (input, lettersInHand) => {
@@ -51,19 +51,22 @@ export const usesAvailableLetters = (input, lettersInHand) => {
 
 export const scoreWord = (word) => {
   const pointValue = {
-    A: 1, E: 1, I: 1, O: 1, U: 1, L: 1, N: 1, R: 1, S: 1, T: 1,
-    D: 2, G: 2,
-    B: 3, C: 3, M: 3, P: 3,
-    F: 4, H: 4, V: 4, W: 4, Y: 4,
-    K: 5,
-    J: 8, X: 8,
-    Q: 10, Z: 10
+    A: 1, B: 3, C: 3, D: 2,
+    E: 1, F: 4, G: 2, H: 4,
+    I: 1, J: 8, K: 5, L: 1,
+    M: 3, N: 1, O: 1, P: 3,
+    Q: 10, R: 1, S: 1, T: 1,
+    U: 1, V: 4, W: 4, X: 8,
+    Y: 4, Z: 10,
   };
-
-  if (!word || word.length === 0) return 0;
 
   let numOfPoints = 0;
   const upperWord = word.toUpperCase();
+  const minLengthForBonus = 7;
+  const maxLengthForBonus = 10;
+  const bonusPoints = 8;
+
+  if (!word || word.length === 0) return 0;
 
   for (const char of upperWord) {
     if (pointValue[char]) {
@@ -71,14 +74,38 @@ export const scoreWord = (word) => {
     }
   }
 
-  if (upperWord.length >= 7 && upperWord.length <= 10) {
-    numOfPoints += 8;
+  if (upperWord.length >= minLengthForBonus && upperWord.length <= maxLengthForBonus) {
+    numOfPoints += bonusPoints;
   }
 
   return numOfPoints;
-
 };
 
 export const highestScoreFrom = (words) => {
-  // Implement this method for wave 4
+  let bestWord = words[0];
+  let bestScore = scoreWord(bestWord);
+
+  for (const word of words) {
+    const score = scoreWord(word);
+    const wordLength = word.length;
+    const bestWordLength = bestWord.length;
+    const maxWordLength = 10;
+    const tieScore = bestScore;
+
+    if (score > bestScore) {
+      bestWord = word;
+      bestScore = score;
+
+    } else if (score === tieScore) {
+      if (bestWordLength !== maxWordLength && wordLength === maxWordLength) {
+        bestWord = word;
+        bestScore = score;
+      } else if (bestWordLength !== maxWordLength && wordLength < bestWordLength) {
+        bestWord = word;
+        bestScore = score;
+      }
+    }
+  }
+
+  return { word: bestWord, score: bestScore };
 };
