@@ -9,7 +9,7 @@ const letterPool = {
 };
 
 export const drawLetters = () => {
-  let letterBank = [];
+  const letterBank = [];
   let poolDictCopy = {...letterPool};
   const handSize = 10;
 
