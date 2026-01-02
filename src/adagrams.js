@@ -1,56 +1,75 @@
-const letterPool = {
-  A: 9, B: 2, C: 2, D: 4,
-  E: 12, F: 2, G: 3, H: 2,
-  I: 9, J: 1, K: 1, L: 4,
-  M: 2, N: 6, O: 8, P: 2,
-  Q: 1, R: 6, S: 4, T: 6,
-  U: 4, V: 2, W: 2, X: 1,
-  Y: 2, Z: 1,
+const LETTER_POOL = {
+  A: 9,
+  B: 2,
+  C: 2,
+  D: 4,
+  E: 12,
+  F: 2,
+  G: 3,
+  H: 2,
+  I: 9,
+  J: 1,
+  K: 1,
+  L: 4,
+  M: 2,
+  N: 6,
+  O: 8,
+  P: 2,
+  Q: 1,
+  R: 6,
+  S: 4,
+  T: 6,
+  U: 4,
+  V: 2,
+  W: 2,
+  X: 1,
+  Y: 2,
+  Z: 1,
 };
+
+const randint = (max) => Math.floor(Math.random() * max);
 
 export const drawLetters = () => {
   const letterBank = [];
-  let poolDictCopy = {...letterPool};
+  const availableLetters = [];
   const handSize = 10;
 
-  while (letterBank.length < handSize) {
-    const usesAvailableLetters = [];
-
-    for (const [letter, count] of Object.entries(poolDictCopy)) {
-      if (count > 0) {
-        usesAvailableLetters.push(letter);
-      }
+  for (const [letter, count] of Object.entries(LETTER_POOL)) {
+    for (let i = 0; i < count; i++) {
+      availableLetters.push(letter);
     }
+  }
 
-    const randomIndex = Math.floor(Math.random() * usesAvailableLetters.length);
-    const randomLetter = usesAvailableLetters[randomIndex];
-
+  for (let i = 0; i < handSize; i++) {
+    const randomIndex = randint(availableLetters.length);
+    const randomLetter = availableLetters[randomIndex];
     letterBank.push(randomLetter);
-
-    poolDictCopy[randomLetter] -= 1;
+    availableLetters.splice(randomIndex, 1);
   }
 
   return letterBank;
 };
 
 export const usesAvailableLetters = (input, lettersInHand) => {
-  const letterBankCopy = [...lettersInHand];
+  const letterFrequency = {};
   const upperInput = input.toUpperCase();
 
+  for (const letter of lettersInHand) {
+    letterFrequency[letter] = (letterFrequency[letter] || 0) + 1;
+  }
+
   for (const letter of upperInput) {
-    const letterIndex = letterBankCopy.indexOf(letter);
-    if (letterIndex === -1) {
+    if (!letterFrequency[letter] || letterFrequency[letter] === 0) {
       return false;
-    } else {
-      letterBankCopy.splice(letterIndex, 1);
     }
+    letterFrequency[letter] -= 1;
   }
 
   return true;
 };
 
 export const scoreWord = (word) => {
-  const pointValue = {
+  const POINT_VALUE = {
     A: 1, B: 3, C: 3, D: 2,
     E: 1, F: 4, G: 2, H: 4,
     I: 1, J: 8, K: 5, L: 1,
@@ -62,50 +81,39 @@ export const scoreWord = (word) => {
 
   let numOfPoints = 0;
   const upperWord = word.toUpperCase();
-  const minLengthForBonus = 7;
-  const maxLengthForBonus = 10;
-  const bonusPoints = 8;
-
-  if (!word || word.length === 0) return 0;
+  const MIN_LENGTH_FOR_BONUS = 7;
+  const MAX_LENGTH_FOR_BONUS = 10;
+  const BONUS_POINTS = 8;
 
   for (const char of upperWord) {
-    if (pointValue[char]) {
-      numOfPoints += pointValue[char];
+    if (POINT_VALUE[char]) {
+      numOfPoints += POINT_VALUE[char];
     }
   }
 
-  if (upperWord.length >= minLengthForBonus && upperWord.length <= maxLengthForBonus) {
-    numOfPoints += bonusPoints;
+  if (upperWord.length >= MIN_LENGTH_FOR_BONUS) {
+    numOfPoints += BONUS_POINTS;
   }
 
   return numOfPoints;
 };
 
 export const highestScoreFrom = (words) => {
-  let bestWord = words[0];
-  let bestScore = scoreWord(bestWord);
+  const MAX_HAND_SIZE = 10;
 
-  for (const word of words) {
-    const score = scoreWord(word);
-    const wordLength = word.length;
-    const bestWordLength = bestWord.length;
-    const maxWordLength = 10;
-    const tieScore = bestScore;
+  const highestScore = Math.max(...words.map(word => scoreWord(word)));
 
-    if (score > bestScore) {
-      bestWord = word;
-      bestScore = score;
+  const bestScoreWords = words.filter(word => scoreWord(word) === highestScore);
 
-    } else if (score === tieScore) {
-      if (bestWordLength !== maxWordLength && wordLength === maxWordLength) {
-        bestWord = word;
-        bestScore = score;
-      } else if (bestWordLength !== maxWordLength && wordLength < bestWordLength) {
-        bestWord = word;
-        bestScore = score;
-      }
-    }
+  const tenLetterWords = bestScoreWords.filter(word => word.length === MAX_HAND_SIZE);
+
+  if (tenLetterWords.length > 0) {
+    return { word: tenLetterWords[0], score: highestScore };
   }
 
-  return { word: bestWord, score: bestScore };
+  const shortestWord = bestScoreWords.reduce((shortest, word) =>
+    word.length < shortest.length ? word : shortest
+  );
+
+  return { word: shortestWord, score: highestScore };
 };
